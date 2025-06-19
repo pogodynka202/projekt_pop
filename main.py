@@ -23,13 +23,14 @@ class Stacja:
 
 
 class Pracownik:
-    def __init__(self, imie, nazwisko, miejscowosc, posty):
+    def __init__(self, imie, nazwisko, miejscowosc, posty, stacja=None):
         self.imie = imie
         self.nazwisko = nazwisko
         self.miejscowosc = miejscowosc
         self.posty = posty
+        self.stacja = stacja
         self.wspolrzedne = self.pobierz_wspolrzedne()
-        self.marker = map_widget.set_marker(self.wspolrzedne[0], self.wspolrzedne[1], text=imie + " " + nazwisko)
+        self.marker = map_widget.set_marker(self.wspolrzedne[0], self.wspolrzedne[1], text=self.imie + " " + self.nazwisko)
 
     def pobierz_wspolrzedne(self):
         url = f"https://pl.wikipedia.org/wiki/{self.miejscowosc}"
@@ -40,17 +41,30 @@ class Pracownik:
         return [lat, lon]
 
 
+def aktualizuj_dropdown_stacji():
+    menu = dropdown_stacje["menu"]
+    menu.delete(0, "end")
+    for s in stacje:
+        menu.add_command(label=s.nazwa, command=lambda value=s.nazwa: wybrana_stacja.set(value))
+    if stacje:
+        wybrana_stacja.set(stacje[0].nazwa)
+    else:
+        wybrana_stacja.set("")
+
+
 def dodaj_pracownika():
     imie = entry_name.get()
     nazwisko = entry_surname.get()
     miejscowosc = entry_location.get()
     posty = entry_posts.get()
+    stacja = wybrana_stacja.get()
 
-    pracownicy.append(Pracownik(imie, nazwisko, miejscowosc, posty))
+    pracownicy.append(Pracownik(imie, nazwisko, miejscowosc, posty, stacja))
     entry_name.delete(0, END)
     entry_surname.delete(0, END)
     entry_location.delete(0, END)
     entry_posts.delete(0, END)
+    wybrana_stacja.set("")
     entry_name.focus()
     pokaz_pracownikow()
 
@@ -75,6 +89,7 @@ def pokaz_szczegoly():
     label_surname_szczegoly_obiektow_wartosc.config(text=p.nazwisko)
     label_location_szczegoly_obiektow_wartosc.config(text=p.miejscowosc)
     label_posts_szczegoly_obiektow_wartosc.config(text=p.posty)
+    label_stacja_szczegoly.config(text=p.stacja)
     map_widget.set_position(p.wspolrzedne[0], p.wspolrzedne[1])
     map_widget.set_zoom(14)
 
@@ -86,7 +101,7 @@ def edytuj_pracownika():
     entry_surname.insert(0, p.nazwisko)
     entry_location.insert(0, p.miejscowosc)
     entry_posts.insert(0, p.posty)
-
+    wybrana_stacja.set(p.stacja)
     button_dodaj_obiekt.config(text="Zapisz", command=lambda: zapisz_edycje(i))
 
 
@@ -95,8 +110,9 @@ def zapisz_edycje(i):
     nazwisko = entry_surname.get()
     miejscowosc = entry_location.get()
     posty = entry_posts.get()
+    stacja = wybrana_stacja.get()
     pracownicy[i].marker.delete()
-    pracownicy[i] = Pracownik(imie, nazwisko, miejscowosc, posty)
+    pracownicy[i] = Pracownik(imie, nazwisko, miejscowosc, posty, stacja)
 
     pokaz_pracownikow()
     button_dodaj_obiekt.config(text="Dodaj pracownika", command=dodaj_pracownika)
@@ -104,10 +120,9 @@ def zapisz_edycje(i):
     entry_surname.delete(0, END)
     entry_location.delete(0, END)
     entry_posts.delete(0, END)
+    wybrana_stacja.set("")
     entry_name.focus()
 
-
-# ------------------- STACJE -------------------
 
 def dodaj_stacje():
     nazwa = entry_nazwa_stacji.get()
@@ -115,6 +130,7 @@ def dodaj_stacje():
         stacje.append(Stacja(nazwa))
         entry_nazwa_stacji.delete(0, END)
         pokaz_stacje()
+        aktualizuj_dropdown_stacji()
 
 
 def pokaz_stacje():
@@ -128,6 +144,7 @@ def usun_stacje():
     stacje[i].marker.delete()
     stacje.pop(i)
     pokaz_stacje()
+    aktualizuj_dropdown_stacji()
 
 
 def edytuj_stacje():
@@ -141,6 +158,7 @@ def zapisz_edycje_stacji(i):
     stacje[i].marker.delete()
     stacje[i] = Stacja(nowa_nazwa)
     pokaz_stacje()
+    aktualizuj_dropdown_stacji()
     button_dodaj_stacje.config(text="Dodaj stację", command=dodaj_stacje)
     entry_nazwa_stacji.delete(0, END)
 
@@ -151,8 +169,6 @@ def pokaz_szczegoly_stacji():
     map_widget.set_position(s.wspolrzedne[0], s.wspolrzedne[1])
     map_widget.set_zoom(10)
 
-
-# ------------------- GUI -------------------
 
 root = Tk()
 root.geometry("1400x800")
@@ -170,7 +186,6 @@ ramka_szczegoly_obiektow.grid(row=1, column=0, columnspan=3)
 ramka_mapa.grid(row=2, column=0, columnspan=3)
 ramka_stacje.grid(row=0, column=2)
 
-# ramka_lista_obiektow
 Label(ramka_lista_obiektow, text="Lista pracowników").grid(row=0, column=0, columnspan=3)
 listbox_lista_obiektow = Listbox(ramka_lista_obiektow, width=50, height=15)
 listbox_lista_obiektow.grid(row=1, column=0, columnspan=3)
@@ -178,12 +193,12 @@ Button(ramka_lista_obiektow, text="Pokaż szczegóły", command=pokaz_szczegoly)
 Button(ramka_lista_obiektow, text="Usuń", command=usun_pracownika).grid(row=2, column=1)
 Button(ramka_lista_obiektow, text="Edytuj", command=edytuj_pracownika).grid(row=2, column=2)
 
-# ramka_formularz
 Label(ramka_formularz, text="Formularz pracownika").grid(row=0, column=0, columnspan=2)
 Label(ramka_formularz, text="Imię:").grid(row=1, column=0, sticky=W)
 Label(ramka_formularz, text="Nazwisko:").grid(row=2, column=0, sticky=W)
 Label(ramka_formularz, text="Miejscowość:").grid(row=3, column=0, sticky=W)
 Label(ramka_formularz, text="Posty:").grid(row=4, column=0, sticky=W)
+Label(ramka_formularz, text="Stacja:").grid(row=5, column=0, sticky=W)
 
 entry_name = Entry(ramka_formularz)
 entry_name.grid(row=1, column=1)
@@ -194,10 +209,13 @@ entry_location.grid(row=3, column=1)
 entry_posts = Entry(ramka_formularz)
 entry_posts.grid(row=4, column=1)
 
-button_dodaj_obiekt = Button(ramka_formularz, text="Dodaj pracownika", command=dodaj_pracownika)
-button_dodaj_obiekt.grid(row=5, column=0, columnspan=2)
+wybrana_stacja = StringVar()
+dropdown_stacje = OptionMenu(ramka_formularz, wybrana_stacja, "")
+dropdown_stacje.grid(row=5, column=1)
 
-# ramka_szczegoly_obiektow
+button_dodaj_obiekt = Button(ramka_formularz, text="Dodaj pracownika", command=dodaj_pracownika)
+button_dodaj_obiekt.grid(row=6, column=0, columnspan=2)
+
 Label(ramka_szczegoly_obiektow, text="Szczegóły:").grid(row=0, column=0)
 Label(ramka_szczegoly_obiektow, text="Imię:").grid(row=1, column=0)
 label_name_szczegoly_obiektow_wartosc = Label(ramka_szczegoly_obiektow, text="...")
@@ -211,8 +229,10 @@ label_location_szczegoly_obiektow_wartosc.grid(row=1, column=5)
 Label(ramka_szczegoly_obiektow, text="Posty:").grid(row=1, column=6)
 label_posts_szczegoly_obiektow_wartosc = Label(ramka_szczegoly_obiektow, text="...")
 label_posts_szczegoly_obiektow_wartosc.grid(row=1, column=7)
+Label(ramka_szczegoly_obiektow, text="Stacja:").grid(row=1, column=8)
+label_stacja_szczegoly = Label(ramka_szczegoly_obiektow, text="...")
+label_stacja_szczegoly.grid(row=1, column=9)
 
-# ramka_stacje
 Label(ramka_stacje, text="Lista stacji").grid(row=0, column=0, columnspan=3)
 listbox_stacje = Listbox(ramka_stacje, width=50, height=15)
 listbox_stacje.grid(row=1, column=0, columnspan=3)
@@ -226,7 +246,6 @@ entry_nazwa_stacji.grid(row=4, column=0, columnspan=2)
 button_dodaj_stacje = Button(ramka_stacje, text="Dodaj stację", command=dodaj_stacje)
 button_dodaj_stacje.grid(row=5, column=0, columnspan=2)
 
-# ramka_mapa
 map_widget = tkintermapview.TkinterMapView(ramka_mapa, width=1400, height=500, corner_radius=5)
 map_widget.set_position(52.23, 21.0)
 map_widget.set_zoom(6)
