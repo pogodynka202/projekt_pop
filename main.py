@@ -157,6 +157,15 @@ def zapisz_edycje(i):
     entry_name.focus()
 
 
+def pokaz_wszystkich_pracownikow():
+    map_widget.delete_all_marker()
+    for s in stacje:
+            s.marker = map_widget.set_marker(s.wspolrzedne[0], s.wspolrzedne[1], text=s.nazwa)
+    for p in pracownicy:
+            p.marker = map_widget.set_marker(p.wspolrzedne[0], p.wspolrzedne[1], text=f"{p.imie} {p.nazwisko}")
+
+
+
 def dodaj_stacje():
     nazwa = entry_nazwa_stacji.get()
     if nazwa:
@@ -306,6 +315,9 @@ button_pokaz_pracownikow_dla_stacji.grid(row=2, column=2, sticky=W)
 
 button_pokaz_wszystkich_klientow = Button(ramka_mapa, text="Pokaż wszystkich klientów", command=pokaz_wszystkich_klientow)
 button_pokaz_wszystkich_klientow.grid(row=3, column=0, columnspan=2, sticky=W)
+
+button_pokaz_wszystkich_pracownikow = Button(ramka_mapa, text="Pokaż wszystkich pracowników", command=pokaz_wszystkich_pracownikow)
+button_pokaz_wszystkich_pracownikow.grid(row=4, column=0, columnspan=2, sticky=W)
 
 # Pracownicy
 Label(ramka_lista_obiektow, text="Lista pracowników").grid(row=0, column=0, columnspan=3)
