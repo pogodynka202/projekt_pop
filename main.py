@@ -23,22 +23,13 @@ class Stacja:
 
 
 class Pracownik:
-    def __init__(self, imie, nazwisko, miejscowosc, posty, stacja=None):
+    def __init__(self, imie, nazwisko, posty, stacja_obiekt):
         self.imie = imie
         self.nazwisko = nazwisko
-        self.miejscowosc = miejscowosc
         self.posty = posty
-        self.stacja = stacja
-        self.wspolrzedne = self.pobierz_wspolrzedne()
-        self.marker = map_widget.set_marker(self.wspolrzedne[0], self.wspolrzedne[1], text=self.imie + " " + self.nazwisko)
-
-    def pobierz_wspolrzedne(self):
-        url = f"https://pl.wikipedia.org/wiki/{self.miejscowosc}"
-        response = requests.get(url).text
-        soup = BeautifulSoup(response, "html.parser")
-        lat = float(soup.select(".latitude")[1].text.replace(",", "."))
-        lon = float(soup.select(".longitude")[1].text.replace(",", "."))
-        return [lat, lon]
+        self.stacja = stacja_obiekt.nazwa
+        self.wspolrzedne = stacja_obiekt.wspolrzedne
+        self.marker = map_widget.set_marker(self.wspolrzedne[0], self.wspolrzedne[1], text=imie + " " + nazwisko)
 
 
 def aktualizuj_dropdown_stacji():
@@ -55,14 +46,13 @@ def aktualizuj_dropdown_stacji():
 def dodaj_pracownika():
     imie = entry_name.get()
     nazwisko = entry_surname.get()
-    miejscowosc = entry_location.get()
     posty = entry_posts.get()
-    stacja = wybrana_stacja.get()
-
-    pracownicy.append(Pracownik(imie, nazwisko, miejscowosc, posty, stacja))
+    nazwa_stacji = wybrana_stacja.get()
+    stacja_obiekt = next((s for s in stacje if s.nazwa == nazwa_stacji), None)
+    if stacja_obiekt:
+        pracownicy.append(Pracownik(imie, nazwisko, posty, stacja_obiekt))
     entry_name.delete(0, END)
     entry_surname.delete(0, END)
-    entry_location.delete(0, END)
     entry_posts.delete(0, END)
     wybrana_stacja.set("")
     entry_name.focus()
@@ -87,7 +77,6 @@ def pokaz_szczegoly():
     p = pracownicy[i]
     label_name_szczegoly_obiektow_wartosc.config(text=p.imie)
     label_surname_szczegoly_obiektow_wartosc.config(text=p.nazwisko)
-    label_location_szczegoly_obiektow_wartosc.config(text=p.miejscowosc)
     label_posts_szczegoly_obiektow_wartosc.config(text=p.posty)
     label_stacja_szczegoly.config(text=p.stacja)
     map_widget.set_position(p.wspolrzedne[0], p.wspolrzedne[1])
@@ -99,7 +88,6 @@ def edytuj_pracownika():
     p = pracownicy[i]
     entry_name.insert(0, p.imie)
     entry_surname.insert(0, p.nazwisko)
-    entry_location.insert(0, p.miejscowosc)
     entry_posts.insert(0, p.posty)
     wybrana_stacja.set(p.stacja)
     button_dodaj_obiekt.config(text="Zapisz", command=lambda: zapisz_edycje(i))
@@ -108,17 +96,16 @@ def edytuj_pracownika():
 def zapisz_edycje(i):
     imie = entry_name.get()
     nazwisko = entry_surname.get()
-    miejscowosc = entry_location.get()
     posty = entry_posts.get()
-    stacja = wybrana_stacja.get()
-    pracownicy[i].marker.delete()
-    pracownicy[i] = Pracownik(imie, nazwisko, miejscowosc, posty, stacja)
-
+    nazwa_stacji = wybrana_stacja.get()
+    stacja_obiekt = next((s for s in stacje if s.nazwa == nazwa_stacji), None)
+    if stacja_obiekt:
+        pracownicy[i].marker.delete()
+        pracownicy[i] = Pracownik(imie, nazwisko, posty, stacja_obiekt)
     pokaz_pracownikow()
     button_dodaj_obiekt.config(text="Dodaj pracownika", command=dodaj_pracownika)
     entry_name.delete(0, END)
     entry_surname.delete(0, END)
-    entry_location.delete(0, END)
     entry_posts.delete(0, END)
     wybrana_stacja.set("")
     entry_name.focus()
@@ -196,25 +183,22 @@ Button(ramka_lista_obiektow, text="Edytuj", command=edytuj_pracownika).grid(row=
 Label(ramka_formularz, text="Formularz pracownika").grid(row=0, column=0, columnspan=2)
 Label(ramka_formularz, text="Imię:").grid(row=1, column=0, sticky=W)
 Label(ramka_formularz, text="Nazwisko:").grid(row=2, column=0, sticky=W)
-Label(ramka_formularz, text="Miejscowość:").grid(row=3, column=0, sticky=W)
-Label(ramka_formularz, text="Posty:").grid(row=4, column=0, sticky=W)
-Label(ramka_formularz, text="Stacja:").grid(row=5, column=0, sticky=W)
+Label(ramka_formularz, text="Posty:").grid(row=3, column=0, sticky=W)
+Label(ramka_formularz, text="Stacja:").grid(row=4, column=0, sticky=W)
 
 entry_name = Entry(ramka_formularz)
 entry_name.grid(row=1, column=1)
 entry_surname = Entry(ramka_formularz)
 entry_surname.grid(row=2, column=1)
-entry_location = Entry(ramka_formularz)
-entry_location.grid(row=3, column=1)
 entry_posts = Entry(ramka_formularz)
-entry_posts.grid(row=4, column=1)
+entry_posts.grid(row=3, column=1)
 
 wybrana_stacja = StringVar()
 dropdown_stacje = OptionMenu(ramka_formularz, wybrana_stacja, "")
-dropdown_stacje.grid(row=5, column=1)
+dropdown_stacje.grid(row=4, column=1)
 
 button_dodaj_obiekt = Button(ramka_formularz, text="Dodaj pracownika", command=dodaj_pracownika)
-button_dodaj_obiekt.grid(row=6, column=0, columnspan=2)
+button_dodaj_obiekt.grid(row=5, column=0, columnspan=2)
 
 Label(ramka_szczegoly_obiektow, text="Szczegóły:").grid(row=0, column=0)
 Label(ramka_szczegoly_obiektow, text="Imię:").grid(row=1, column=0)
@@ -223,15 +207,12 @@ label_name_szczegoly_obiektow_wartosc.grid(row=1, column=1)
 Label(ramka_szczegoly_obiektow, text="Nazwisko:").grid(row=1, column=2)
 label_surname_szczegoly_obiektow_wartosc = Label(ramka_szczegoly_obiektow, text="...")
 label_surname_szczegoly_obiektow_wartosc.grid(row=1, column=3)
-Label(ramka_szczegoly_obiektow, text="Miejscowość:").grid(row=1, column=4)
-label_location_szczegoly_obiektow_wartosc = Label(ramka_szczegoly_obiektow, text="...")
-label_location_szczegoly_obiektow_wartosc.grid(row=1, column=5)
-Label(ramka_szczegoly_obiektow, text="Posty:").grid(row=1, column=6)
+Label(ramka_szczegoly_obiektow, text="Posty:").grid(row=1, column=4)
 label_posts_szczegoly_obiektow_wartosc = Label(ramka_szczegoly_obiektow, text="...")
-label_posts_szczegoly_obiektow_wartosc.grid(row=1, column=7)
-Label(ramka_szczegoly_obiektow, text="Stacja:").grid(row=1, column=8)
+label_posts_szczegoly_obiektow_wartosc.grid(row=1, column=5)
+Label(ramka_szczegoly_obiektow, text="Stacja:").grid(row=1, column=6)
 label_stacja_szczegoly = Label(ramka_szczegoly_obiektow, text="...")
-label_stacja_szczegoly.grid(row=1, column=9)
+label_stacja_szczegoly.grid(row=1, column=7)
 
 Label(ramka_stacje, text="Lista stacji").grid(row=0, column=0, columnspan=3)
 listbox_stacje = Listbox(ramka_stacje, width=50, height=15)
