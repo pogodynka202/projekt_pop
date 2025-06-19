@@ -1,11 +1,10 @@
 from tkinter import *
 import tkintermapview
+import requests
+from bs4 import BeautifulSoup
 
-# Lista pracowników
-pracownicy: list = []
-
-# Lista stacji (na razie pusta, będzie potem GUI do zarządzania)
-stacje: list = []
+pracownicy = []
+stacje = []
 
 
 class Stacja:
@@ -15,8 +14,6 @@ class Stacja:
         self.marker = map_widget.set_marker(self.wspolrzedne[0], self.wspolrzedne[1], text=nazwa)
 
     def pobierz_wspolrzedne(self):
-        import requests
-        from bs4 import BeautifulSoup
         url = f"https://pl.wikipedia.org/wiki/{self.nazwa}"
         response = requests.get(url).text
         soup = BeautifulSoup(response, "html.parser")
@@ -35,8 +32,6 @@ class Pracownik:
         self.marker = map_widget.set_marker(self.wspolrzedne[0], self.wspolrzedne[1], text=imie + " " + nazwisko)
 
     def pobierz_wspolrzedne(self):
-        import requests
-        from bs4 import BeautifulSoup
         url = f"https://pl.wikipedia.org/wiki/{self.miejscowosc}"
         response = requests.get(url).text
         soup = BeautifulSoup(response, "html.parser")
@@ -112,24 +107,72 @@ def zapisz_edycje(i):
     entry_name.focus()
 
 
-# GUI
+# ------------------- STACJE -------------------
+
+def dodaj_stacje():
+    nazwa = entry_nazwa_stacji.get()
+    if nazwa:
+        stacje.append(Stacja(nazwa))
+        entry_nazwa_stacji.delete(0, END)
+        pokaz_stacje()
+
+
+def pokaz_stacje():
+    listbox_stacje.delete(0, END)
+    for idx, s in enumerate(stacje):
+        listbox_stacje.insert(idx, f"{idx + 1}. {s.nazwa}")
+
+
+def usun_stacje():
+    i = listbox_stacje.index(ACTIVE)
+    stacje[i].marker.delete()
+    stacje.pop(i)
+    pokaz_stacje()
+
+
+def edytuj_stacje():
+    i = listbox_stacje.index(ACTIVE)
+    entry_nazwa_stacji.insert(0, stacje[i].nazwa)
+    button_dodaj_stacje.config(text="Zapisz", command=lambda: zapisz_edycje_stacji(i))
+
+
+def zapisz_edycje_stacji(i):
+    nowa_nazwa = entry_nazwa_stacji.get()
+    stacje[i].marker.delete()
+    stacje[i] = Stacja(nowa_nazwa)
+    pokaz_stacje()
+    button_dodaj_stacje.config(text="Dodaj stację", command=dodaj_stacje)
+    entry_nazwa_stacji.delete(0, END)
+
+
+def pokaz_szczegoly_stacji():
+    i = listbox_stacje.index(ACTIVE)
+    s = stacje[i]
+    map_widget.set_position(s.wspolrzedne[0], s.wspolrzedne[1])
+    map_widget.set_zoom(10)
+
+
+# ------------------- GUI -------------------
+
 root = Tk()
-root.geometry("1200x800")
-root.title("mapa_pracownicy")
+root.geometry("1400x800")
+root.title("System zarządzania stacjami i pracownikami")
 
 ramka_lista_obiektow = Frame(root)
 ramka_formularz = Frame(root)
 ramka_szczegoly_obiektow = Frame(root)
 ramka_mapa = Frame(root)
+ramka_stacje = Frame(root)
 
 ramka_lista_obiektow.grid(row=0, column=0)
 ramka_formularz.grid(row=0, column=1)
-ramka_szczegoly_obiektow.grid(row=1, column=0, columnspan=2)
-ramka_mapa.grid(row=2, column=0, columnspan=2)
+ramka_szczegoly_obiektow.grid(row=1, column=0, columnspan=3)
+ramka_mapa.grid(row=2, column=0, columnspan=3)
+ramka_stacje.grid(row=0, column=2)
 
 # ramka_lista_obiektow
 Label(ramka_lista_obiektow, text="Lista pracowników").grid(row=0, column=0, columnspan=3)
-listbox_lista_obiektow = Listbox(ramka_lista_obiektow, width=60, height=15)
+listbox_lista_obiektow = Listbox(ramka_lista_obiektow, width=50, height=15)
 listbox_lista_obiektow.grid(row=1, column=0, columnspan=3)
 Button(ramka_lista_obiektow, text="Pokaż szczegóły", command=pokaz_szczegoly).grid(row=2, column=0)
 Button(ramka_lista_obiektow, text="Usuń", command=usun_pracownika).grid(row=2, column=1)
@@ -169,8 +212,22 @@ Label(ramka_szczegoly_obiektow, text="Posty:").grid(row=1, column=6)
 label_posts_szczegoly_obiektow_wartosc = Label(ramka_szczegoly_obiektow, text="...")
 label_posts_szczegoly_obiektow_wartosc.grid(row=1, column=7)
 
+# ramka_stacje
+Label(ramka_stacje, text="Lista stacji").grid(row=0, column=0, columnspan=3)
+listbox_stacje = Listbox(ramka_stacje, width=50, height=15)
+listbox_stacje.grid(row=1, column=0, columnspan=3)
+Button(ramka_stacje, text="Szczegóły", command=pokaz_szczegoly_stacji).grid(row=2, column=0)
+Button(ramka_stacje, text="Usuń", command=usun_stacje).grid(row=2, column=1)
+Button(ramka_stacje, text="Edytuj", command=edytuj_stacje).grid(row=2, column=2)
+
+Label(ramka_stacje, text="Dodaj nową stację").grid(row=3, column=0, columnspan=2)
+entry_nazwa_stacji = Entry(ramka_stacje)
+entry_nazwa_stacji.grid(row=4, column=0, columnspan=2)
+button_dodaj_stacje = Button(ramka_stacje, text="Dodaj stację", command=dodaj_stacje)
+button_dodaj_stacje.grid(row=5, column=0, columnspan=2)
+
 # ramka_mapa
-map_widget = tkintermapview.TkinterMapView(ramka_mapa, width=1200, height=500, corner_radius=5)
+map_widget = tkintermapview.TkinterMapView(ramka_mapa, width=1400, height=500, corner_radius=5)
 map_widget.set_position(52.23, 21.0)
 map_widget.set_zoom(6)
 map_widget.grid(row=0, column=0, columnspan=2)
