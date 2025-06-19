@@ -61,6 +61,18 @@ def aktualizuj_dropdown_stacji():
     else:
         wybrana_stacja_klienta.set("")
 
+    menu_mapa_klienci = dropdown_stacja_mapy_klienci["menu"]
+    menu_mapa_klienci.delete(0, "end")
+    for s in stacje:
+        menu_mapa_klienci.add_command(label=s.nazwa, command=lambda value=s.nazwa: wybrana_stacja_mapy_klienci.set(value))
+    if stacje:
+        wybrana_stacja_mapy_klienci.set(stacje[0].nazwa)
+    else:
+        wybrana_stacja_mapy_klienci.set("")
+
+
+    
+
 
 def dodaj_pracownika():
     imie = entry_name.get()
@@ -195,6 +207,15 @@ def pokaz_klientow():
     for idx, k in enumerate(klienci):
         listbox_klienci.insert(idx, f"{idx + 1}. {k.firma} - {k.imie}")
 
+def pokaz_klientow_dla_stacji():
+    nazwa_stacji = wybrana_stacja_mapy_klienci.get()
+    map_widget.delete_all_marker()
+    for s in stacje:
+        s.marker = map_widget.set_marker(s.wspolrzedne[0], s.wspolrzedne[1], text=s.nazwa)
+    for k in klienci:
+        if k.stacja == nazwa_stacji:
+            k.marker = map_widget.set_marker(k.wspolrzedne[0], k.wspolrzedne[1], text=f"{k.firma} ({k.imie})")
+
 
 def usun_klienta():
     i = listbox_klienci.index(ACTIVE)
@@ -246,6 +267,12 @@ ramka_stacje.grid(row=0, column=2)
 ramka_klient.grid(row=1, column=1)
 ramka_szczegoly_obiektow.grid(row=1, column=0, columnspan=3)
 ramka_mapa.grid(row=2, column=0, columnspan=3)
+Label(ramka_mapa, text="Pokaż klientów dla wybranej stacji:").grid(row=1, column=0, sticky=W)
+wybrana_stacja_mapy_klienci = StringVar()
+dropdown_stacja_mapy_klienci = OptionMenu(ramka_mapa, wybrana_stacja_mapy_klienci, "")
+dropdown_stacja_mapy_klienci.grid(row=1, column=1, sticky=W)
+button_pokaz_klientow_dla_stacji = Button(ramka_mapa, text="Pokaż klientów dla stacji", command=pokaz_klientow_dla_stacji)
+button_pokaz_klientow_dla_stacji.grid(row=1, column=2, sticky=W)
 
 # Pracownicy
 Label(ramka_lista_obiektow, text="Lista pracowników").grid(row=0, column=0, columnspan=3)
