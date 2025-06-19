@@ -70,8 +70,14 @@ def aktualizuj_dropdown_stacji():
     else:
         wybrana_stacja_mapy_klienci.set("")
 
-
-    
+    menu_mapa_pracownicy = dropdown_stacja_mapy_pracownicy["menu"]
+    menu_mapa_pracownicy.delete(0, "end")
+    for s in stacje:
+        menu_mapa_pracownicy.add_command(label=s.nazwa, command=lambda value=s.nazwa: wybrana_stacja_mapy_pracownicy.set(value))
+    if stacje:
+        wybrana_stacja_mapy_pracownicy.set(stacje[0].nazwa)
+    else:
+        wybrana_stacja_mapy_pracownicy.set("")
 
 
 def dodaj_pracownika():
@@ -101,6 +107,15 @@ def usun_pracownika():
     pracownicy[i].marker.delete()
     pracownicy.pop(i)
     pokaz_pracownikow()
+
+def pokaz_pracownikow_dla_stacji():
+    nazwa_stacji = wybrana_stacja_mapy_pracownicy.get()
+    map_widget.delete_all_marker()
+    for s in stacje:
+        s.marker = map_widget.set_marker(s.wspolrzedne[0], s.wspolrzedne[1], text=s.nazwa)
+    for p in pracownicy:
+        if p.stacja == nazwa_stacji:
+            p.marker = map_widget.set_marker(p.wspolrzedne[0], p.wspolrzedne[1], text=f"{p.imie} {p.nazwisko}")
 
 
 def pokaz_szczegoly():
@@ -248,6 +263,13 @@ def zapisz_edycje_klienta(i):
     wybrana_stacja_klienta.set("")
     entry_klient_imie.focus()
 
+def pokaz_wszystkich_klientow():
+    map_widget.delete_all_marker()
+    for s in stacje:
+        s.marker = map_widget.set_marker(s.wspolrzedne[0], s.wspolrzedne[1], text=s.nazwa)
+    for k in klienci:
+        k.marker = map_widget.set_marker(k.wspolrzedne[0], k.wspolrzedne[1], text=f"{k.firma} ({k.imie})")
+
 
 root = Tk()
 root.geometry("1400x900")
@@ -267,12 +289,23 @@ ramka_stacje.grid(row=0, column=2)
 ramka_klient.grid(row=1, column=1)
 ramka_szczegoly_obiektow.grid(row=1, column=0, columnspan=3)
 ramka_mapa.grid(row=2, column=0, columnspan=3)
+
 Label(ramka_mapa, text="Pokaż klientów dla wybranej stacji:").grid(row=1, column=0, sticky=W)
 wybrana_stacja_mapy_klienci = StringVar()
 dropdown_stacja_mapy_klienci = OptionMenu(ramka_mapa, wybrana_stacja_mapy_klienci, "")
 dropdown_stacja_mapy_klienci.grid(row=1, column=1, sticky=W)
 button_pokaz_klientow_dla_stacji = Button(ramka_mapa, text="Pokaż klientów dla stacji", command=pokaz_klientow_dla_stacji)
 button_pokaz_klientow_dla_stacji.grid(row=1, column=2, sticky=W)
+
+Label(ramka_mapa, text="Pokaż pracowników dla wybranej stacji:").grid(row=2, column=0, sticky=W)
+wybrana_stacja_mapy_pracownicy = StringVar()
+dropdown_stacja_mapy_pracownicy = OptionMenu(ramka_mapa, wybrana_stacja_mapy_pracownicy, "")
+dropdown_stacja_mapy_pracownicy.grid(row=2, column=1, sticky=W)
+button_pokaz_pracownikow_dla_stacji = Button(ramka_mapa, text="Pokaż pracowników dla stacji", command=pokaz_pracownikow_dla_stacji)
+button_pokaz_pracownikow_dla_stacji.grid(row=2, column=2, sticky=W)
+
+button_pokaz_wszystkich_klientow = Button(ramka_mapa, text="Pokaż wszystkich klientów", command=pokaz_wszystkich_klientow)
+button_pokaz_wszystkich_klientow.grid(row=3, column=0, columnspan=2, sticky=W)
 
 # Pracownicy
 Label(ramka_lista_obiektow, text="Lista pracowników").grid(row=0, column=0, columnspan=3)
