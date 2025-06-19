@@ -61,6 +61,7 @@ def aktualizuj_dropdown_stacji():
         wybrana_stacja_mapy_klienci.set("")
         wybrana_stacja_mapy_pracownicy.set("")
 
+
 def dodaj_pracownika():
     imie = entry_name.get()
     nazwisko = entry_surname.get()
@@ -90,11 +91,10 @@ def usun_pracownika():
 def pokaz_pracownikow_dla_stacji():
     nazwa_stacji = wybrana_stacja_mapy_pracownicy.get()
     map_widget.delete_all_marker()
-    for s in stacje:
-        s.marker = map_widget.set_marker(s.wspolrzedne[0], s.wspolrzedne[1], text=s.nazwa)
     for p in pracownicy:
         if p.stacja == nazwa_stacji:
             p.marker = map_widget.set_marker(p.wspolrzedne[0], p.wspolrzedne[1], text=f"{p.imie} {p.nazwisko}")
+
 
 def pokaz_szczegoly():
     i = listbox_lista_obiektow.index(ACTIVE)
@@ -137,10 +137,9 @@ def zapisz_edycje(i):
 
 def pokaz_wszystkich_pracownikow():
     map_widget.delete_all_marker()
-    for s in stacje:
-        s.marker = map_widget.set_marker(s.wspolrzedne[0], s.wspolrzedne[1], text=s.nazwa)
     for p in pracownicy:
         p.marker = map_widget.set_marker(p.wspolrzedne[0], p.wspolrzedne[1], text=f"{p.imie} {p.nazwisko}")
+
 
 def dodaj_stacje():
     nazwa = entry_nazwa_stacji.get()
@@ -188,6 +187,7 @@ def pokaz_wszystkie_stacje():
     for s in stacje:
         s.marker = map_widget.set_marker(s.wspolrzedne[0], s.wspolrzedne[1], text=s.nazwa)
 
+
 def dodaj_klienta():
     imie = entry_klient_imie.get()
     firma = entry_klient_firma.get()
@@ -209,11 +209,11 @@ def pokaz_klientow():
 def pokaz_klientow_dla_stacji():
     nazwa_stacji = wybrana_stacja_mapy_klienci.get()
     map_widget.delete_all_marker()
-    for s in stacje:
-        s.marker = map_widget.set_marker(s.wspolrzedne[0], s.wspolrzedne[1], text=s.nazwa)
     for k in klienci:
         if k.stacja == nazwa_stacji:
             k.marker = map_widget.set_marker(k.wspolrzedne[0], k.wspolrzedne[1], text=f"{k.firma} ({k.imie})")
+
+
 
 def usun_klienta():
     i = listbox_klienci.index(ACTIVE)
@@ -248,8 +248,6 @@ def zapisz_edycje_klienta(i):
 
 def pokaz_wszystkich_klientow():
     map_widget.delete_all_marker()
-    for s in stacje:
-        s.marker = map_widget.set_marker(s.wspolrzedne[0], s.wspolrzedne[1], text=s.nazwa)
     for k in klienci:
         k.marker = map_widget.set_marker(k.wspolrzedne[0], k.wspolrzedne[1], text=f"{k.firma} ({k.imie})")
 
@@ -298,6 +296,29 @@ dropdown_stacje.grid(row=7, column=1, columnspan=2, sticky="ew")
 
 button_dodaj_obiekt = ttk.Button(ramka_lewa, text="Dodaj pracownika", command=dodaj_pracownika)
 button_dodaj_obiekt.grid(row=8, column=0, columnspan=3, pady=(7, 0), sticky="ew")
+
+label_szczegoly_header = ttk.Label(ramka_lewa, text="Szczegóły pracownika", font=("Arial", 11, "bold"))
+label_szczegoly_header.grid(row=9, column=0, columnspan=3, pady=(10, 0))
+
+label_name_szczegoly_obiektow = ttk.Label(ramka_lewa, text="Imię:")
+label_name_szczegoly_obiektow.grid(row=10, column=0, sticky="e")
+label_name_szczegoly_obiektow_wartosc = ttk.Label(ramka_lewa, text="")
+label_name_szczegoly_obiektow_wartosc.grid(row=10, column=1, columnspan=2, sticky="w")
+
+label_surname_szczegoly_obiektow = ttk.Label(ramka_lewa, text="Nazwisko:")
+label_surname_szczegoly_obiektow.grid(row=11, column=0, sticky="e")
+label_surname_szczegoly_obiektow_wartosc = ttk.Label(ramka_lewa, text="")
+label_surname_szczegoly_obiektow_wartosc.grid(row=11, column=1, columnspan=2, sticky="w")
+
+label_posts_szczegoly_obiektow = ttk.Label(ramka_lewa, text="Posty:")
+label_posts_szczegoly_obiektow.grid(row=12, column=0, sticky="e")
+label_posts_szczegoly_obiektow_wartosc = ttk.Label(ramka_lewa, text="")
+label_posts_szczegoly_obiektow_wartosc.grid(row=12, column=1, columnspan=2, sticky="w")
+
+label_stacja_szczegoly_label = ttk.Label(ramka_lewa, text="Stacja:")
+label_stacja_szczegoly_label.grid(row=13, column=0, sticky="e")
+label_stacja_szczegoly = ttk.Label(ramka_lewa, text="")
+label_stacja_szczegoly.grid(row=13, column=1, columnspan=2, sticky="w")
 
 # --- Stacje ---
 ttk.Label(ramka_srodek, text="Lista stacji", font=("Arial", 13, "bold")).grid(row=0, column=0, columnspan=3)
