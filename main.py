@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 
 pracownicy = []
 stacje = []
+klienci = []
 
 
 class Stacja:
@@ -32,6 +33,15 @@ class Pracownik:
         self.marker = map_widget.set_marker(self.wspolrzedne[0], self.wspolrzedne[1], text=imie + " " + nazwisko)
 
 
+class Klient:
+    def __init__(self, imie, firma, stacja_obiekt):
+        self.imie = imie
+        self.firma = firma
+        self.stacja = stacja_obiekt.nazwa
+        self.wspolrzedne = stacja_obiekt.wspolrzedne
+        self.marker = map_widget.set_marker(self.wspolrzedne[0], self.wspolrzedne[1], text=f"{firma} ({imie})")
+
+
 def aktualizuj_dropdown_stacji():
     menu = dropdown_stacje["menu"]
     menu.delete(0, "end")
@@ -41,6 +51,15 @@ def aktualizuj_dropdown_stacji():
         wybrana_stacja.set(stacje[0].nazwa)
     else:
         wybrana_stacja.set("")
+
+    menu_klient = dropdown_stacje_klienta["menu"]
+    menu_klient.delete(0, "end")
+    for s in stacje:
+        menu_klient.add_command(label=s.nazwa, command=lambda value=s.nazwa: wybrana_stacja_klienta.set(value))
+    if stacje:
+        wybrana_stacja_klienta.set(stacje[0].nazwa)
+    else:
+        wybrana_stacja_klienta.set("")
 
 
 def dodaj_pracownika():
@@ -157,22 +176,78 @@ def pokaz_szczegoly_stacji():
     map_widget.set_zoom(10)
 
 
-root = Tk()
-root.geometry("1400x800")
-root.title("System zarządzania stacjami i pracownikami")
+def dodaj_klienta():
+    imie = entry_klient_imie.get()
+    firma = entry_klient_firma.get()
+    nazwa_stacji = wybrana_stacja_klienta.get()
+    stacja_obiekt = next((s for s in stacje if s.nazwa == nazwa_stacji), None)
+    if stacja_obiekt:
+        klienci.append(Klient(imie, firma, stacja_obiekt))
+    entry_klient_imie.delete(0, END)
+    entry_klient_firma.delete(0, END)
+    wybrana_stacja_klienta.set("")
+    entry_klient_imie.focus()
+    pokaz_klientow()
 
+
+def pokaz_klientow():
+    listbox_klienci.delete(0, END)
+    for idx, k in enumerate(klienci):
+        listbox_klienci.insert(idx, f"{idx + 1}. {k.firma} - {k.imie}")
+
+
+def usun_klienta():
+    i = listbox_klienci.index(ACTIVE)
+    klienci[i].marker.delete()
+    klienci.pop(i)
+    pokaz_klientow()
+
+
+def edytuj_klienta():
+    i = listbox_klienci.index(ACTIVE)
+    k = klienci[i]
+    entry_klient_imie.insert(0, k.imie)
+    entry_klient_firma.insert(0, k.firma)
+    wybrana_stacja_klienta.set(k.stacja)
+    button_dodaj_klienta.config(text="Zapisz", command=lambda: zapisz_edycje_klienta(i))
+
+
+def zapisz_edycje_klienta(i):
+    imie = entry_klient_imie.get()
+    firma = entry_klient_firma.get()
+    nazwa_stacji = wybrana_stacja_klienta.get()
+    stacja_obiekt = next((s for s in stacje if s.nazwa == nazwa_stacji), None)
+    if stacja_obiekt:
+        klienci[i].marker.delete()
+        klienci[i] = Klient(imie, firma, stacja_obiekt)
+    pokaz_klientow()
+    button_dodaj_klienta.config(text="Dodaj klienta", command=dodaj_klienta)
+    entry_klient_imie.delete(0, END)
+    entry_klient_firma.delete(0, END)
+    wybrana_stacja_klienta.set("")
+    entry_klient_imie.focus()
+
+
+root = Tk()
+root.geometry("1400x900")
+root.title("System zarządzania stacjami, pracownikami i klientami")
+
+# Ramki
 ramka_lista_obiektow = Frame(root)
 ramka_formularz = Frame(root)
 ramka_szczegoly_obiektow = Frame(root)
 ramka_mapa = Frame(root)
 ramka_stacje = Frame(root)
+ramka_klient = Frame(root)
 
 ramka_lista_obiektow.grid(row=0, column=0)
 ramka_formularz.grid(row=0, column=1)
+ramka_stacje.grid(row=0, column=2)
+ramka_klient.grid(row=1, column=1)
 ramka_szczegoly_obiektow.grid(row=1, column=0, columnspan=3)
 ramka_mapa.grid(row=2, column=0, columnspan=3)
-ramka_stacje.grid(row=0, column=2)
 
+# Pracownicy
 Label(ramka_lista_obiektow, text="Lista pracowników").grid(row=0, column=0, columnspan=3)
 listbox_lista_obiektow = Listbox(ramka_lista_obiektow, width=50, height=15)
 listbox_lista_obiektow.grid(row=1, column=0, columnspan=3)
@@ -214,6 +289,7 @@ Label(ramka_szczegoly_obiektow, text="Stacja:").grid(row=1, column=6)
 label_stacja_szczegoly = Label(ramka_szczegoly_obiektow, text="...")
 label_stacja_szczegoly.grid(row=1, column=7)
 
+# Stacje
 Label(ramka_stacje, text="Lista stacji").grid(row=0, column=0, columnspan=3)
 listbox_stacje = Listbox(ramka_stacje, width=50, height=15)
 listbox_stacje.grid(row=1, column=0, columnspan=3)
@@ -227,6 +303,30 @@ entry_nazwa_stacji.grid(row=4, column=0, columnspan=2)
 button_dodaj_stacje = Button(ramka_stacje, text="Dodaj stację", command=dodaj_stacje)
 button_dodaj_stacje.grid(row=5, column=0, columnspan=2)
 
+# Klienci
+Label(ramka_klient, text="Lista klientów").grid(row=0, column=0, columnspan=3)
+listbox_klienci = Listbox(ramka_klient, width=50, height=10)
+listbox_klienci.grid(row=1, column=0, columnspan=3)
+Button(ramka_klient, text="Usuń", command=usun_klienta).grid(row=2, column=0)
+Button(ramka_klient, text="Edytuj", command=edytuj_klienta).grid(row=2, column=1)
+
+Label(ramka_klient, text="Dodaj klienta").grid(row=3, column=0, columnspan=2)
+Label(ramka_klient, text="Imię:").grid(row=4, column=0)
+entry_klient_imie = Entry(ramka_klient)
+entry_klient_imie.grid(row=4, column=1)
+Label(ramka_klient, text="Firma:").grid(row=5, column=0)
+entry_klient_firma = Entry(ramka_klient)
+entry_klient_firma.grid(row=5, column=1)
+
+Label(ramka_klient, text="Stacja:").grid(row=6, column=0)
+wybrana_stacja_klienta = StringVar()
+dropdown_stacje_klienta = OptionMenu(ramka_klient, wybrana_stacja_klienta, "")
+dropdown_stacje_klienta.grid(row=6, column=1)
+
+button_dodaj_klienta = Button(ramka_klient, text="Dodaj klienta", command=dodaj_klienta)
+button_dodaj_klienta.grid(row=7, column=0, columnspan=2)
+
+# Mapa
 map_widget = tkintermapview.TkinterMapView(ramka_mapa, width=1400, height=500, corner_radius=5)
 map_widget.set_position(52.23, 21.0)
 map_widget.set_zoom(6)
